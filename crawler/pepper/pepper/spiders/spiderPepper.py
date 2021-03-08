@@ -4,14 +4,13 @@ import requests
 import os
 import json
 class crawler(scrapy.Spider):
-    name = 'pepper'
-    BASE_DIR= 'F:\dataScience\crawler\pepper'
+    i=0
+    name = 'pep'
+    BASE_DIR= 'F:\\dataScience\\crawler\\pepper\\'
     Limit=20
     def start_requests(self):
-        baseurl=[
-            'https://www.pepperfry.com/site_product/search?q=',
-            ]
-        items=['king bed','queen bed','tea table','study table','']
+        baseurl='https://www.pepperfry.com/site_product/search?q='
+        items=['king bed','queen bed','tea table','study table','dinning table','almirah','sofa set','couch','easy chair','office chairs','crib']
         urls=[]
         directories=[]
         for item in items:
@@ -23,23 +22,28 @@ class crawler(scrapy.Spider):
             if not os.path.exists(directoryPath):
                 os.mkdir(directoryPath)
         for i in range(len(urls)):
-            dir={
+            d={
                 'Dir-Name':directories[i]
             }
+
             resp=scrapy.Request(url=urls[i],callback=self.parse,dont_filter=True)
             resp.meta['Dir-Name']=directories[i]
             yield resp
-    def parse(self, response):
-        product_url=response.css('.clip-prd-dtl::attr(src)').extract()
+    def parse(self, response,**meta):
+
+        product_url=response.css(".clip-prd-dtl::attr(href)").extract()
+        #print(product_url)
         counter=0
         for url in product_url:
             resp=scrapy.Request(url=url,callback=self.parse_items,dont_filter=True)
             resp.meta['Dir-Name']=response.meta['Dir-Name']
             if counter==self.Limit:
-                break
+               break
             if not resp != None:
                 counter+=1
+            yield resp
     def parse_items(self,response):
+        print("Inside parse_items")
         item_name=response.css('.v-pro-ttl::text').extract()
         item_price=response.css('.v-offer-price-amt::text').extract()
         items_savings=response.css('.total_saving::text').extract()[0].strip()
